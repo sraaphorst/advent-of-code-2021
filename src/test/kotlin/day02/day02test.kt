@@ -1,5 +1,8 @@
 package day02
 
+// day02test.kt
+// By Sebastian Raaphorst, 2021.
+
 import arrow.core.right
 import org.junit.Test
 import kotlin.test.assertEquals

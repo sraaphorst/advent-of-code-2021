@@ -1,7 +1,7 @@
 package day02
 
 // day02.kt
-// By Sebastian Raaphorst, 2021.
+// By Sebastian Raaphorst, 2022.
 
 import arrow.core.Either
 import arrow.core.Either.Left

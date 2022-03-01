@@ -1,5 +1,8 @@
 package day01
 
+// day01test.kt
+// By Sebastian Raaphorst, 2022.
+
 import org.junit.Test
 import kotlin.test.assertEquals
 

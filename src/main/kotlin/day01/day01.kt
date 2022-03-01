@@ -1,7 +1,7 @@
 package day01
 
 // day01.kt
-// By Sebastian Raaphorst, 2021.
+// By Sebastian Raaphorst, 2022f.
 
 import kotlinx.coroutines.runBlocking
 

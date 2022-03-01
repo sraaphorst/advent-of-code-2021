@@ -1,7 +1,7 @@
 package day04
 
-// day03.kt
-// By Sebastian Raaphorst, 2021.
+// day04.kt
+// By Sebastian Raaphorst, 2022.
 
 import arrow.core.foldLeft
 import kotlinx.coroutines.runBlocking

@@ -41,4 +41,19 @@ class Day07Test {
     fun `move to minimum position`() {
         assertEquals(determineMinimumFuelCost(positions, fuel1), 37)
     }
+
+    @Test
+    fun `median is best position`() {
+        assertEquals(determineMedianFuelCost(positions, fuel1), 37)
+    }
+
+    @Test
+    fun `move to position 5 with crab fuel`() {
+        assertEquals(determineFuelCost(positions, 5, fuel2), 168)
+    }
+
+    @Test
+    fun `move to position 2 with crab fuel`() {
+        assertEquals(determineFuelCost(positions, 2, fuel2), 206)
+    }
 }

@@ -93,7 +93,6 @@ class Day05Test {
 
     @Test
     fun `number danger zones`() {
-        val abc = findAllDangerZoneCount(lineData)
         assertEquals(findAllDangerZoneCount(lineData), 12)
     }
 }

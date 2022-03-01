@@ -35,7 +35,7 @@ class LanternFish(val population: Population) {
         population.map { it.value }.fold(Count.ZERO) { acc, curr -> acc.add(curr) }
 }
 
-tailrec fun lanternfish(population: LanternFish, days: Int): LanternFish {
+tailrec fun lanternfish(population: LanternFish, days: Timer): LanternFish {
     if (days == 0)
         return population
 

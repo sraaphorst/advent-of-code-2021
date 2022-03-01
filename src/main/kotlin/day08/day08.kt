@@ -18,7 +18,7 @@ data class DigitString(val inputs: List<Digit>, val outputs: List<Digit>) {
             str.trim().split(' ').map(::toDigit)
 
         fun parse(input: String): List<DigitString> =
-            input.replace("|\n", "| ").trim().split('\n').map {
+            input.trim().split('\n').map {
                 val result = it.split('|').map(::toDigits)
                 DigitString(result[0], result[1])
             }

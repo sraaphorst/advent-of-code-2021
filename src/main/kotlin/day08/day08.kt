@@ -4,6 +4,7 @@ package day08
 // By Sebastian Raaphorst, 2022.
 
 import arrow.core.sequenceNullable
+import kotlinx.coroutines.runBlocking
 
 enum class Wire {
     A, B, C, D, E, F, G
@@ -187,7 +188,7 @@ class DigitString constructor(val inputs: List<Set<Wire>>, val outputs: List<Set
 }
 
 
-fun main() {
+fun main() = runBlocking {
     val digitStrings = DigitString.parse(object {}.javaClass.getResource("/day08.txt")!!.readText())
 
     println("--- Day 8: Seven Segment Search ---\n")

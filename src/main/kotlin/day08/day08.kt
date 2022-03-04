@@ -4,7 +4,6 @@ package day08
 // By Sebastian Raaphorst, 2022.
 
 import arrow.core.sequenceNullable
-import java.util.Collections.swap
 
 enum class Wire {
     A, B, C, D, E, F, G

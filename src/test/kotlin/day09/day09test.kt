@@ -21,6 +21,11 @@ class Day09Test {
 
     @Test
     fun `risk level sum`() {
-        assertEquals(riskLevelSum(heightMap), 15)
+        assertEquals(heightMap.riskLevelSum(), 15)
+    }
+
+    @Test
+    fun `basin size product`() {
+        assertEquals(heightMap.basinProduct(), 1134)
     }
 }

@@ -32,10 +32,6 @@ enum class Digit(val value: Int, val wires: Set<Wire>) {
     NINE(9, setOf(Wire.A, Wire.B, Wire.C, Wire.D, Wire.F, Wire.G))
 }
 
-private fun <T> List<T?>.liftNull(): List<T>? {
-    @Suppress("UNCHECKED_CAST")
-    return if (any { it == null }) null else this as List<T>
-}
 
 class DigitString constructor(val inputs: List<Set<Wire>>, val outputs: List<Set<Wire>>) {
     // val permutation: Map<Wire, Wire>? = findWirePermutation()

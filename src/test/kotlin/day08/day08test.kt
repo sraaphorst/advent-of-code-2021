@@ -28,4 +28,9 @@ class Day08Test {
     fun `count 1478 outputs`() {
         assertEquals(DigitString.count1478Outputs(digitStrings), 26)
     }
+
+    @Test
+    fun `sum outputs`() {
+        assertEquals(DigitString.sumDigitStringOutputs(digitStrings), 61229)
+    }
 }

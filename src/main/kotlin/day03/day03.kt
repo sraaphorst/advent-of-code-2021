@@ -58,7 +58,7 @@ fun main(): Unit = runBlocking {
     val diagnostics = object {}.javaClass.getResource("/day03.txt")!!
         .readText().trim().split("\n")
 
-    println("--- Day 3: Binary Diagnostic ---")
+    println("--- Day 3: Binary Diagnostic ---\n")
 
     // Answer: 4147524
     println("Part 1: Power Consumption: ${calculateGammaEpsilon(diagnostics).multiply()}")

@@ -1,7 +1,7 @@
 package day01
 
 // day01.kt
-// By Sebastian Raaphorst, 2022f.
+// By Sebastian Raaphorst, 2022.
 
 import kotlinx.coroutines.runBlocking
 
@@ -20,7 +20,7 @@ fun main(): Unit = runBlocking {
     val depths = object {}.javaClass.getResource("/day01.txt")!!
         .readText().trim().split("\n").map { it.toInt() }
 
-    println("--- Day 1: Sonar Sweep ---")
+    println("--- Day 1: Sonar Sweep ---\n")
 
     // Answer: 1195
     println("Part 1: Depth Increases: ${calculateDepthIncreases(depths)}")

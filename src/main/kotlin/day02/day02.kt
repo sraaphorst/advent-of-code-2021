@@ -7,6 +7,7 @@ import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.computations.either
+import arrow.core.orNull
 import kotlinx.coroutines.runBlocking
 
 enum class Direction(val delta: Pair<Int, Int>) {
@@ -90,11 +91,11 @@ fun calculateCoordinateProduct(lst: List<String>, useAim: Boolean): Either<Valid
 fun main(): Unit = runBlocking {
     val moves = object {}.javaClass.getResource("/day02.txt")!!.readText().trim().split("\n")
 
-    println("--- Day 2: Dive! ---")
+    println("--- Day 2: Dive! ---\n")
 
     // Answer: 2147104
-    println("Part 1: Coordinates: ${calculateCoordinateProduct(moves, false)}")
+    println("Part 1: Coordinates: ${calculateCoordinateProduct(moves, false).orNull()}")
 
     // Answer: 2044620088
-    println("Part 2: Coordinates: ${calculateCoordinateProduct(moves, true)}")
+    println("Part 2: Coordinates: ${calculateCoordinateProduct(moves, true).orNull()}")
 }

@@ -12,12 +12,12 @@ typealias OctopusGrid = List<OctopusRow>
 val deltas = (-1..1).flatMap { x -> (-1..1).map { y -> Pair(x, y) } }
 
 
-// Useful function that should just be in Kotlin
+// Useful function that should just be in Kotlin.
 fun <T> Iterable<T?>.countNull(): Int =
     count { it == null }
 
 
-// Accumulate flashes.
+// Advance from one grid to the next while accumulating the number of flashes.
 fun Pair<OctopusGrid, Int>.advance(new: Pair<OctopusGrid, Int>) =
     Pair(new.first, second + new.second)
 
@@ -27,37 +27,39 @@ fun OctopusGrid.step(): Pair<OctopusGrid, Int> {
     val heights = indices
     val widths = first().indices
 
-    // Calculate the neighbours of position. A position is not its own neighbour.
+    // Calculate the neighbours of a position. Note that a position is *not* its own neighbour.
     fun neighbours(p: Pair<Int, Int>): List<Pair<Int, Int>> =
         deltas.map { Pair(it.first + p.first, it.second + p.second) }
             .filter { it !== Pair(0, 0) && heights.contains(it.first) && widths.contains(it.second) }
 
     // Remember: ALL octopuses are to increase energy levels during the step, so we set the initial
-    // octopusToIncrease to the entire grid.
-    // Also note that an octopus can be scheduled to increase MULTIPLE times if it has multiple neighbours that flash.
-
-    // Thus, assume we are increasing the energy levels of all octopuses unless told otherwise.
-    // Mark flashed octopuses with an energy level of null to indicate that they have flashed.
-    // IDEA: Increase all octopus indicated to increase by 1. Null octopus stay the same.
-    // Scan the grid. For any octopus > 9, set to null and add their neighbours to the next octopusToIncrease.
-    // Repeat until octopusToIncrease is empty.
+    //   octopusesToIncrease to the entire grid.
+    // An octopus can be scheduled to increase energy levels multiple times if it has multiple neighbours that flash.
+    // Mark flashed octopuses with an energy level of null to indicate that they have flashed and to stop them from
+    //   flashing multiple times.
+    // IDEA: Increase energy of all octopuses indicated to increase by 1. Null octopuses stay the same.
+    // Scan the grid. For any octopus > 9, set to null and add their neighbours to the next octopusesToIncrease.
+    // Repeat until octopusesToIncrease is empty, in which case we have completed the round as no changes will be
+    //   further recorded to any octopus' energy levels.
     tailrec fun aux(octopusGrid: OctopusGrid,
-                    octopusToIncrease: List<Pair<Int, Int>> = heights.flatMap { x -> widths.map { y -> Pair(x, y) } }): Pair<OctopusGrid, Int> {
-        // We have to normalize the octopus grid by setting any with energy level > 9 to 0.
-        if (octopusToIncrease.isEmpty())
+                    octopusesToIncrease: List<Pair<Int, Int>> = heights.flatMap { x -> widths.map { y -> Pair(x, y) } }): Pair<OctopusGrid, Int> {
+        // If no octopuses are left to increase, we are done this round.
+        // Normalize the board by setting any octopus that flashed (and now has null energy) to 0, and count the
+        // number of null energy octopuses to determine the number of flashes that occurred during this round.
+        if (octopusesToIncrease.isEmpty())
             return Pair(octopusGrid.map { row -> row.map { it ?: 0 } },
                 octopusGrid.sumOf(OctopusRow::countNull))
 
-        // Increase the energy levels of all octopus to increase and make the new grid.
+        // Increase the energy levels of all octopuses scheduled to increase and make this the new grid.
         val newOctopusGrid = heights.map { x -> widths.map { y ->
-            octopusGrid[x][y]?.plus(octopusToIncrease.count { it.first == x && it.second == y })
+            octopusGrid[x][y]?.plus(octopusesToIncrease.count { it.first == x && it.second == y })
         } }
 
-        // All the energy levels are now increased.
-        // At this point, the octopus to increase have:
+        // All the energy levels are now increased, and we can determine the octopuses who will be affected by a flash.
+        // At this point, the octopuses remaining to increase through a flash have:
         // 1. A non-null energy level; and
-        // 2. a neighbour with an energy level > 9.
-        val newOctopusToIncrease = heights.flatMap { x -> widths.flatMap { y ->
+        // 2. a neighbour with an energy level > 9 (the flasher).
+        val newOctopusesToIncrease = heights.flatMap { x -> widths.flatMap { y ->
             val energy = newOctopusGrid[x][y]
             if (energy != null && energy > 9)
                 neighbours(Pair(x, y)).filter { newOctopusGrid[it.first][it.second] != null }
@@ -65,13 +67,13 @@ fun OctopusGrid.step(): Pair<OctopusGrid, Int> {
                 emptyList()
         } }
 
-        // Filter any flashed octopuses down to null.
+        // Now we mark the octopuses who have flashed by setting their energy level to null.
         val nullifiedOctopusGrid = heights.map { x -> widths.map { y ->
             val energy = newOctopusGrid[x][y]
             if (energy == null || energy > 9) null else energy
         } }
 
-        return aux(nullifiedOctopusGrid, newOctopusToIncrease)
+        return aux(nullifiedOctopusGrid, newOctopusesToIncrease)
     }
 
     return aux(this)

@@ -29,7 +29,7 @@ sealed class ChunksStatus {
     class Incomplete(private val stack: List<Chunk>): ChunksStatus() {
         fun completionScore(): Long =
             stack.reversed().map { chunk -> ChunkType.values().first { chunk.type.close == it.close }.completionValue }
-                .fold(0L) { score, value -> score * 5 + value }
+                .fold(0L) { score, value -> score * 5L + value }
     }
 
     class InvalidClose(val invalidChunk: ChunkType): ChunksStatus()

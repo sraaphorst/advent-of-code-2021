@@ -30,14 +30,7 @@ class Day10Test {
     }
 
     @Test
-    fun `chunk list completion scores`() {
-        assertEquals(chunkList.map { it.checkChunks() }.filterIsInstance(ChunksStatus.Incomplete::class.java).map {
-            it.completionScore()
-        }, listOf(288957, 5566, 1480781, 995444, 294))
-    }
-
-    @Test
     fun `chunk list completion score`() {
-        assertEquals(chunkList.completionScore(), 288957)
+        assertEquals(chunkList.completionScore(), 288957L)
     }
 }

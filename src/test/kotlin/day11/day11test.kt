@@ -1,6 +1,6 @@
 package day11
 
-// day11.kt
+// day11test.kt
 // By Sebastian Raaphorst, 2022.
 
 import org.junit.Test

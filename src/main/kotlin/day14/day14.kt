@@ -85,7 +85,7 @@ fun Polymer.countsForLargeSteps(steps: Int, rules: Rules): Map<Char, BigInteger>
     }.fold(BigInteger.ZERO) { acc, v -> acc.add(v) })
                 .add(if (first() == e) BigInteger.ONE else BigInteger.ZERO)
                 .add(if (last() == e) BigInteger.ONE else BigInteger.ZERO)).divide(BigInteger.TWO)
-    }.filterValues { it != BigInteger.ZERO }
+    }.filterValues { it !== BigInteger.ZERO }
 }
 
 

@@ -54,6 +54,14 @@ fun main() = runBlocking {
     // Answer: 708
     println("Part 1: Number of dots visible after first fold: ${paper.executeFold(folds.first()).points.size}")
 
+    /**
+     * #### ###  #    #  # ###  ###  #### #  #
+     * #    #  # #    #  # #  # #  # #    #  #
+     * ###  ###  #    #  # ###  #  # ###  ####
+     * #    #  # #    #  # #  # ###  #    #  #
+     * #    #  # #    #  # #  # # #  #    #  #
+     * #### ###  ####  ##  ###  #  # #    #  #
+     */
     // Answer: EBLUBRFH
     println("Part 2: Final origami folding:")
     println(folds.fold(paper) { p, f -> p.executeFold(f) }.toDiagram().replace('.', ' '))

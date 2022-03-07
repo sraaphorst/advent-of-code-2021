@@ -3,7 +3,6 @@ package day18
 // day18.kt
 // By Sebastian Raaphorst, 2022.
 
-import arrow.core.Tuple4
 import arrow.typeclasses.Semigroup
 import kotlinx.coroutines.runBlocking
 import java.security.InvalidParameterException
@@ -60,31 +59,146 @@ object SnailfishNumberMonoid: Semigroup<SnailfishNumber> {
     // If it does not, we check the right to see if it explodes. If the right explodes, we need to propagate left.
     // TODO: Consider using a node stack of parent to make the propagation of left and right values easier?
     // TODO: This is getting overly complicated.
-    fun SnailfishNumber.explode(depth: Int = 1):
-            Tuple4<SnailfishNumber, Int?, Int?, Boolean> = when {
-                this is SnailfishLeaf -> Tuple4(this, null, null, false)
-                depth == 5 -> {
-                    // A branch at depth 5 so explode.
-                    this as SnailfishBranch
-                    left as SnailfishLeaf
-                    right as SnailfishLeaf
-                    Tuple4(SnailfishLeaf(0), left.value, right.value, true)
-                }
-                else -> {
-                    // Look to the left to see if we can find an exploding entry.
-                    this as SnailfishBranch
-                    val (node, left, right, result) = this.left.explode(depth + 1)
 
-                    // If we exploded on the left, propagate the value back up and propagate the value to the right.
-//                    if (left != null)
-//                        Tuple4(SnailfishBranch(SnailfishLeaf(0), ))
-                    TODO()
-                }
+    // The data returned here is:
+    // 1. The modified subtree to replace.
+    // 2. The number to propagate left, if any.
+    // 3. The number to propagate right, if any.
+    // 4. The result, i.e. that we exploded.
+//    fun explode(stack: List<SnailfishNumber>):
+//            Tuple4<SnailfishNumber, Int?, Int?, Boolean> = when {
+//                stack.first() is SnailfishLeaf -> Tuple4(stack.first(), null, null, false)
+//                stack.size == 5 -> {
+//                    // A branch at depth 5 so explode.
+//                    this as SnailfishBranch
+//                    left as SnailfishLeaf
+//                    right as SnailfishLeaf
+//                    Tuple4(SnailfishLeaf(0), left.value, right.value, true)
+//                }
+//                else -> {
+//                    // Look to the left to see if we can find an exploding entry.
+//                    this as SnailfishBranch
+//                    val (node, left, right, result) = this.left.explode(depth + 1)
+//
+//                    // If we exploded on the left, propagate the value back up and propagate the value to the right.
+////                    if (left != null)
+////                        Tuple4(SnailfishBranch(SnailfishLeaf(0), ))
+//                    TODO()
+//                }
+//            }
+
+    private data class ExplodeResults(
+            val leftValue: Int? = null,
+            val movedLeft: Boolean = false,
+            val rightValue: Int? = null,
+            val movedRight: Boolean = false,
+            val exploded: Boolean = false,
+            val explodedNode: SnailfishNumber? = null
+    )
+
+    private val NoExplodeResults = ExplodeResults()
+
+    // Exploding is much more difficult than splitting to the point where I almost reverted to string, modified
+    // the string and reparsed.
+    //
+    // Instead, we use the following technique:
+    //
+    // Maintain a stack of the parent nodes.
+    // If we reach an exploding node, replace it, and then set propLeft to the left value and propRight to the
+    // right value.
+    //
+    // When we explode, we begin backtracking on the stack.
+    //
+    // Propagating left:
+    // As soon as we can go left while backtracking on the stack, set goneLeft to true to indicate that we have
+    // gone left. Then continue to go right (zero or more times) until we hit a leaf and add the value to the leaf.
+    // If we can never go left, we drop the value.
+    //
+    // Propagating Right:
+    // As soon as we can go right while backtracking on the stack, set goneRight to true to indicate that we have
+    // gone right. Then continue to go left (zero or more times) until we hit a leaf and add the value to the leaf.
+    // If we can never go right, drop the value.
+//    fun explode(stack: List<SnailfishNumber>,
+//                propLeft: Int? = null,
+//                goneLeft: Boolean = false,
+//                propRight: Int? = null,
+//                goneRight: Boolean = false,
+//                exploded: Boolean): Boolean {
+    fun explode(stack: List<SnailfishNumber>): ExplodeResults = when {
+        // If we are at a node to explode, then explode it and propagate the results back up.
+        stack.size == 5 && stack.first() is SnailfishBranch -> {
+            val node = stack.first() as SnailfishBranch
+            val left = node.left as SnailfishLeaf
+            val right = node.right as SnailfishLeaf
+            ExplodeResults(
+                    left.value, false,
+                    right.value, false, true,
+                    SnailfishLeaf(0)
+            )
+        }
+    }
+
+    private enum class Direction {
+        NONE,
+        LEFT,
+        RIGHT
+    }
+
+    // We are propagating back up from the exploded node.
+    // TODO: We have to make sure to never revisit the exploded node and accidentally increase it.
+    private fun propagate(stack: List<Pair<SnailfishNumber, Direction>>, cameFrom: Direction, er: ExplodeResults):
+            Pair<SnailfishNumber, ExplodeResults> {
+        // Pop the top element of the stack.
+        val (node, dir) = stack.first()
+        val newStack = stack.drop(1)
+
+        // Base cases: we are at a leaf.
+        // TODO: Make sure this leaf is NOT the one created in the explosion.
+        // TODO: I think this should be easy. We just have to make sure to never revisit this node.
+        if (node is SnailfishLeaf) {
+            // If we moved left to get here and had not yet gone left, then this is the node to increase with the
+            // left value since there is no right to proceed to for us to get closer to the exploded node.
+            if (dir == Direction.LEFT && !er.movedLeft && er.leftValue != null) {
+                val newER = ExplodeResults(null, false, er.rightValue, er.movedRight, true, null)
+                return SnailfishLeaf(node.value + er.leftValue) to newER
             }
+
+            // If we moved right to get here, and had already gone left, then this is the node to increase with the
+            // left value since this is the furthest right we can go and the closest we can get to the exploded node.
+            if (dir == Direction.RIGHT && er.movedLeft && er.leftValue != null) {
+                val newER = ExplodeResults(null, false, er.rightValue, er.movedRight, true, null)
+                return SnailfishLeaf(node.value + er.leftValue) to newER
+            }
+
+            // If we moved right to get here and had not yet gone right, then this is the node to increase with the
+            // right value since there is no left to proceed to for us to get closer to the exploded node.
+            if (dir == Direction.RIGHT && !er.movedRight && er.rightValue != null) {
+                val newER = ExplodeResults(er.leftValue, er.movedLeft, null, false, true, null)
+                return SnailfishLeaf(node.value + er.rightValue) to newER
+            }
+
+            // If we moved left to get here and had already gone right, then this is the node to increase with the
+            // right value since this is the furthest left we can go and the closest we can get to the exploded node.
+            if (dir == Direction.LEFT && er.movedRight && er.rightValue != null) {
+                val newER = ExplodeResults(er.leftValue, er.movedLeft, null, false, true, null)
+                return SnailfishLeaf(node.value + er.rightValue) to newER
+            }
+
+            // Otherwise, this leaf is not special: just return it and the current explosion results.
+            return node to er
+        }
+
+        // We are at a branch. If we came from the right,
+        // If we are still propagating left and have not yet moved left, do this.
+        if (wasRight && !explodeResults.movedLeft) {
+            // We can move left, so do so.
+
+        }
+    }
 
     // We have to perform two reductions: splits and explosions.
     fun SnailfishNumber.reduce(): SnailfishNumber {
-        TODO()
+            TODO()
     }
 }
 

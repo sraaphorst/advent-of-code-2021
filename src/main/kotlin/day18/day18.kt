@@ -10,12 +10,18 @@ import java.security.InvalidParameterException
 
 
 // A SnailfishNumber is a binary tree with numbers only on the leaves.
+// Note that toString just re-encodes the SnailfishNumber to its original input.
 sealed interface SnailfishNumber
-class SnailfishLeaf(val value: Int): SnailfishNumber
-class SnailfishBranch(val left: SnailfishNumber, val right: SnailfishNumber): SnailfishNumber
+data class SnailfishLeaf(val value: Int): SnailfishNumber {
+    override fun toString(): String = value.toString()
+}
+data class SnailfishBranch(val left: SnailfishNumber, val right: SnailfishNumber): SnailfishNumber {
+    override fun toString(): String = "[$left,$right]"
+}
 
 
-class SnailfishNumberMonoid: Semigroup<SnailfishNumber> {
+// There is no monoid on SnailfishNumber because we have no identity, so the best we can do is a Semigroup.
+object SnailfishNumberMonoid: Semigroup<SnailfishNumber> {
     override fun SnailfishNumber.combine(b: SnailfishNumber): SnailfishNumber =
             SnailfishBranch(this, b)
 
@@ -30,8 +36,8 @@ class SnailfishNumberMonoid: Semigroup<SnailfishNumber> {
             Pair(SnailfishBranch(left, right), leftHasSplit || rightHasSplit)
         }
         this is SnailfishLeaf && value > 9 ->
-            Pair(SnailfishBranch(SnailfishLeaf(value / 9),
-                    SnailfishLeaf(value / 9 + value % 2)),
+            Pair(SnailfishBranch(SnailfishLeaf(value / 2),
+                    SnailfishLeaf(value / 2 + value % 2)),
                     true
             )
         else -> Pair(this, false)
@@ -70,42 +76,24 @@ class SnailfishNumberMonoid: Semigroup<SnailfishNumber> {
                     val (node, left, right, result) = this.left.explode(depth + 1)
 
                     // If we exploded on the left, propagate the value back up and propagate the value to the right.
-                    if (left != null)
-                        Tuple4(SnailfishBranch(SnailfishLeaf(0), ))
+//                    if (left != null)
+//                        Tuple4(SnailfishBranch(SnailfishLeaf(0), ))
+                    TODO()
                 }
-        }
-    }
+            }
 
     // We have to perform two reductions: splits and explosions.
     fun SnailfishNumber.reduce(): SnailfishNumber {
-
-
+        TODO()
     }
-//    fun SnailFishNumber.reduce(): SnailFishNumber {
-//        // Check for and if necessary, perform a split operation.
-//        // This entails finding the leftmost number > 9 and splitting it, so traverse left until
-//        fun split(explore: SnailFishNumber, hasSplit: Boolean = false): Pair<SnailFishNumber, Boolean> = when {
-//            hasSplit -> Pair(explore, true)
-//            explore.first is Int && explore.first as Int > 9 -> {
-//                val value = explore.first as Int
-//                Pair(SnailFishNumber(SnailFishNumber(value / 2, value / 2 + value % 2), explore.second), true)
-//            }
-//            explore.first is Int && explore.second is Int && explore.second as Int > 9 -> {
-//                val value = explore.second as Int
-//                Pair(SnailFishNumber(explore.first))
-//            }
-//        }
-//    }
 }
 
-// We have no idea what is going to be on the inside of the parentheses, so we have to have an unpleasant
-// return type of Pair<Any, Any>.
-fun String.readSnailFishNumber(): SnailFishNumber {
-    // We need to drop an outer layer of parentheses.
+fun String.parseSnailFishNumber(): SnailfishNumber {
+    // There should always be starting and ending parens: get rid of them.
     val shed = drop(1).dropLast(1)
 
-    // Now we need to find the separating comma. Start at the left and continue to take until we get
-    // balanced parentheses and hit a comma.
+    // We need to find the separating comma. Start at the left and continue to take until we get balanced
+    // parentheses and hit a comma.
     fun stackTake(pars: Int = 0, position: Int = 0): Int = when {
         shed[position] == ',' && pars == 0 -> position
         shed[position] == ',' || shed[position].isDigit() -> stackTake(pars, position + 1)
@@ -115,18 +103,16 @@ fun String.readSnailFishNumber(): SnailFishNumber {
     }
 
     val position = stackTake()
-    val left = take(position-1)
-    val right = drop(position)
+    val left = shed.take(position)
+    val right = shed.drop(position+1)
 
-    // Now if left is a number, or right is a number, then simply return it.
-    return Pair(
-            if (left.contains(',')) left.readSnailFish() else left.toInt(),
-            if (right.contains(',')) right.readSnailFish() else right.toInt()
-    )
+    val leftNode = if (left.contains(',')) left.parseSnailFishNumber() else SnailfishLeaf(left.toInt())
+    val rightNode = if (right.contains(',')) right.parseSnailFishNumber() else SnailfishLeaf(right.toInt())
+    return SnailfishBranch(leftNode, rightNode)
 }
 
 fun main(): Unit = runBlocking {
-    val snailfish = object {}.javaClass.getResource("/day14.txt")!!.readText()
+    val snailfishNumber = object {}.javaClass.getResource("/day18.txt")!!.readText().trim().parseSnailFishNumber()
 
     println("--- Day 18: Snailfish ---\n")
 

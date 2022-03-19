@@ -10,86 +10,46 @@ typealias Encoding = List<Int>
 typealias Position = Pair<Int, Int>
 typealias Image = Set<Position>
 
-val deltas = (1 downTo -1).flatMap { r -> (1 downTo -1).map { c -> r to c } }
+// Convenience function for Cartesian product.
+operator fun IntRange.times(other: IntRange) = this.flatMap { i -> other.map { j -> i to j }}
 
-// Convenience method for adding two positions together.
-fun Position.shift(other: Position): Position =
-        (this.first + other.first) to (this.second + other.second)
-
-// Given a position, examine the surrounding positions and determine the binary encoding from 0 to 511.
-// (-1,-1) (-1, 0) (-1, 1)
-// ( 0,-1) ( 0, 0) ( 0, 1)
-// ( 1,-1) ( 1, 0) ( 1, 1)
-// where the values are the deltas from the pixel at position offset (0,0) and we take the binary number
-// reading left to right, top to bottom.
-fun Image.positionToBinary(position: Position): Int =
-        deltas.withIndex().filter { (_, delta) -> contains(position.shift(delta)) }.map { it.index }
-                .fold(0) { v, idx -> v or (1 shl idx) }
-
+// Determine the new bounds for the expanded image.
 fun Set<Int>.minmaxgrow(): Pair<Int, Int> =
         (min(this) - 1) to (max(this) + 1)
 
-fun printImage(image: Image) {
-    val (m1, M1) = image.map { it.first }.toSet().minmaxgrow()
-    (m1..M1).map { row ->
-        (m1..M1).map { col -> if (image.contains(row to col)) 1 else 0 }
-    }
-}
-
-
-fun evolveN(image: Image, encoding: Encoding, n: Int): Image {
-    fun evolve(image: Image, step: Int): Image {
+fun enhanceN(image: Image, encoding: Encoding, n: Int): Image {
+    fun enhance(prevImage: Image, step: Int): Image {
         // Get the new canvas size.
-        val default = if (encoding[0] == 1) step % 2 == 0 else false
-        val defaultSymbol = if (default) 1 else 0
-        val (minX, maxX) = image.map(Position::first).toSet().minmaxgrow()
-        val (minY, maxY) = image.map(Position::second).toSet().minmaxgrow()
-//        val paddedImage = if (default)
-//            (image +
-//                    listOf(minX, maxX).flatMap { x -> (minY .. maxY).map { y -> x to y }} +
-//                    listOf(minY, maxY).flatMap { y -> (minX .. maxX).map { x -> x to y }}).toSet()
-//        else
-//            image
-//        val paddedImage = image
-//        printImage(paddedImage)
-//        return (minX..maxX).flatMap { x ->
-//            (minY..maxY)
-//                    .map { y -> (x to y) to encoding[paddedImage.positionToBinary(x to y)] }
-//                    .filter { (_, value) -> value == 1 }
-//                    .map { it.first }
-//        }.toSet()
+        // Since the encoding is sneaky and throws a 1 for input 0, we have to do this default symbol.
+        val default = if (encoding[0] == 1 && step % 2 == 0) 1 else 0
+        val (minX, maxX) = prevImage.map(Position::first).toSet().minmaxgrow()
+        val (minY, maxY) = prevImage.map(Position::second).toSet().minmaxgrow()
+
+        // Create the new canvas.
+        val xbounds = minX + 1 until maxX
+        val ybounds = minY + 1 until maxY
         return (minX .. maxX).flatMap { x ->
             (minY..maxY).map { y ->
-                val encidx = ((-1..1) * (-1..1)).map { (dx, dy) ->
-                    if (x + dx in (minX + 1) until maxX && y + dy in (minY + 1) until maxY)
-                        (if (image.contains((x + dx) to (y + dy))) 1 else 0) else defaultSymbol
-                }.reversed().withIndex().sumOf { (index, bit) -> bit shl index }
+                val encidx = ((-1 .. 1) * (-1 .. 1)).map { (dx, dy) ->
+                    val nx = x + dx
+                    val ny = y + dy
+                    if (nx in xbounds && ny in ybounds)
+                        (if (prevImage.contains(nx to ny)) 1 else 0)
+                    else default
+                }.fold(0){cur, bit -> (cur shl 1) or bit }
                 (x to y) to encoding[encidx]
             }.filter { (_, s) -> s == 1 }.map { it.first }
         }.toSet()
-//        val algoIndex = ((-1..1) * (-1..1)).map { (di, dj) ->
-//            if (i + di in 1..(nextHeight - 2) && j + dj in 1..(nextWidth - 2)) prev[i + di - 1][j + dj - 1] else default
-//        }.reversed().withIndex().sumOf { (index, bit) -> if (bit) 1 shl index else 0 }
-//        return (minX .. maxX).flatMap { x ->
-//            (minY .. maxY)
-//                    .map { y -> (x to y) to (if (x in setOf(-1, 1) || y in setOf(-1, 1)) defaultSymbol else encoding[image.positionToBinary(x to y)])}
-//                    .filter { (_, value) -> value == 1 }
-//                    .map { it.first }
-//        }.toSet()
     }
 
-//    return when (n) {
-//        0 -> image
-//        else -> evolveN(evolve(), encoding, n - 1)
-//    }
-    return (1 .. n).fold(image) { prev, step -> evolve(prev, step)}
+    return (1 .. n).fold(image) { prevImage, step -> enhance(prevImage, step)}
 }
 
-fun String.parseEncoding(): Encoding =
-        this.toCharArray().map { if (it == '.') 0 else 1 }
+fun parseEncoding(str: String): Encoding =
+        str.toCharArray().map { if (it == '.') 0 else 1 }
 
-fun List<String>.parseImage(): Image =
-        this.withIndex().flatMap { (row, data) ->
+fun parseImage(lst: List<String>): Image =
+        lst.withIndex().flatMap { (row, data) ->
             data.toCharArray().withIndex().filter { (_, char) -> char == '#' }.map { (col, _) ->
                 row to col
             }
@@ -97,34 +57,14 @@ fun List<String>.parseImage(): Image =
 
 fun main() {
     val input = object {}.javaClass.getResource("/day20.txt")!!.readText().trim().split("\n")
-    val encoding = input[0].parseEncoding()
-    val image = input.drop(2).parseImage()
-    val (m1, M1) = image.map { it.first }.toSet().minmaxgrow()
-    val (m2, M2) = evolveN(image, encoding, 1).map { it.first }.toSet().minmaxgrow()
-
-    val enc = evolveN(image, encoding, 1)
-    val xyz = (m1..M1).map { row ->
-        (m1..M1).map { col -> if (enc.contains(row to col)) 1 else 0 }
-    }
-    println(enc.size)
-    println(xyz)
-
-    val enc2 = evolveN(image, encoding, 2)
-    val xyz2 = (m2..M2).map { row ->
-        (m2..M2).map { col -> if (enc.contains(row to col)) 1 else 0 }
-    }
-    println(enc2.size)
-    println(xyz2)
+    val encoding = parseEncoding(input[0])
+    val image = parseImage(input.drop(2))
 
     println("--- Day 20: Trench Map ---\n")
 
-    // Answer: 5551
-    // Him: 5410/ 5622
-    // Me: 5436 / 5543
-    println("Part 1: Number of lights after no evolutions: ${image.size}")
-    println("Part 1: Number of lights after one evolutions: ${evolveN(image, encoding, 1).size}")
-    println("Part 1: Number of lights after two evolutions: ${evolveN(image, encoding, 2).size}")
+    // Answer: 5622
+    println("Part 1: Number of lights after two enhancements: ${enhanceN(image, encoding, 2).size}")
 
-    // Answer: 4807056953866
-    //println("Part 2: Maximum element difference after 40 steps: ${polymer.maxMinDiffForLargeSteps(40, rules)}")
+    // Answer: 20395
+    println("Part 2: Number of lights after 50 enhancements: ${enhanceN(image, encoding, 50).size}")
 }

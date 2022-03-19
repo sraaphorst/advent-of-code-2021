@@ -36,32 +36,53 @@ fun printImage(image: Image) {
     }
 }
 
-tailrec
+
 fun evolveN(image: Image, encoding: Encoding, n: Int): Image {
-    fun evolve(): Image {
+    fun evolve(image: Image, step: Int): Image {
         // Get the new canvas size.
+        val default = if (encoding[0] == 1) step % 2 == 0 else false
+        val defaultSymbol = if (default) 1 else 0
         val (minX, maxX) = image.map(Position::first).toSet().minmaxgrow()
         val (minY, maxY) = image.map(Position::second).toSet().minmaxgrow()
-        val paddedImage = if (n % 2 == 1)
-            (image +
-                    listOf(minX, maxX).flatMap { x -> (minY .. maxY).map { y -> x to y }} +
-                    listOf(minY, maxY).flatMap { y -> (minX .. maxX).map { x -> x to y }}).toSet()
-        else
-            image
+//        val paddedImage = if (default)
+//            (image +
+//                    listOf(minX, maxX).flatMap { x -> (minY .. maxY).map { y -> x to y }} +
+//                    listOf(minY, maxY).flatMap { y -> (minX .. maxX).map { x -> x to y }}).toSet()
+//        else
+//            image
 //        val paddedImage = image
-        printImage(paddedImage)
-        return (minX..maxX).flatMap { x ->
-            (minY..maxY)
-                    .map { y -> (x to y) to encoding[paddedImage.positionToBinary(x to y)] }
-                    .filter { (_, value) -> value == 1 }
-                    .map { it.first }
+//        printImage(paddedImage)
+//        return (minX..maxX).flatMap { x ->
+//            (minY..maxY)
+//                    .map { y -> (x to y) to encoding[paddedImage.positionToBinary(x to y)] }
+//                    .filter { (_, value) -> value == 1 }
+//                    .map { it.first }
+//        }.toSet()
+        return (minX .. maxX).flatMap { x ->
+            (minY..maxY).map { y ->
+                val encidx = ((-1..1) * (-1..1)).map { (dx, dy) ->
+                    if (x + dx in (minX + 1) until maxX && y + dy in (minY + 1) until maxY)
+                        (if (image.contains((x + dx) to (y + dy))) 1 else 0) else defaultSymbol
+                }.reversed().withIndex().sumOf { (index, bit) -> bit shl index }
+                (x to y) to encoding[encidx]
+            }.filter { (_, s) -> s == 1 }.map { it.first }
         }.toSet()
+//        val algoIndex = ((-1..1) * (-1..1)).map { (di, dj) ->
+//            if (i + di in 1..(nextHeight - 2) && j + dj in 1..(nextWidth - 2)) prev[i + di - 1][j + dj - 1] else default
+//        }.reversed().withIndex().sumOf { (index, bit) -> if (bit) 1 shl index else 0 }
+//        return (minX .. maxX).flatMap { x ->
+//            (minY .. maxY)
+//                    .map { y -> (x to y) to (if (x in setOf(-1, 1) || y in setOf(-1, 1)) defaultSymbol else encoding[image.positionToBinary(x to y)])}
+//                    .filter { (_, value) -> value == 1 }
+//                    .map { it.first }
+//        }.toSet()
     }
 
-    return when (n) {
-        0 -> image
-        else -> evolveN(evolve(), encoding, n - 1)
-    }
+//    return when (n) {
+//        0 -> image
+//        else -> evolveN(evolve(), encoding, n - 1)
+//    }
+    return (1 .. n).fold(image) { prev, step -> evolve(prev, step)}
 }
 
 fun String.parseEncoding(): Encoding =

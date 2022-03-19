@@ -51,26 +51,26 @@ class Day20Test {
 
     @Test
     fun `evolveN with 1`() {
-        assertEquals(enhanceN(image, encoding, 1), image2)
+        assertEquals(image.enhance(encoding, 1), image2)
     }
 
     @Test
     fun `evolveN with 2`() {
-        assertEquals(enhanceN(image, encoding, 2), image3)
+        assertEquals(image.enhance(encoding, 2), image3)
     }
 
     @Test
     fun `num lights once`() {
-        assertEquals(enhanceN(image, encoding, 1).size, 24)
+        assertEquals(image.enhance(encoding, 1).size, 24)
     }
 
     @Test
     fun `num lights twice`() {
-        assertEquals(enhanceN(image, encoding, 2).size, 35)
+        assertEquals(image.enhance(encoding, 2).size, 35)
     }
 
     @Test
     fun `num lights 50`() {
-        assertEquals(enhanceN(image, encoding, 50).size, 3351)
+        assertEquals(image.enhance(encoding, 50).size, 3351)
     }
 }

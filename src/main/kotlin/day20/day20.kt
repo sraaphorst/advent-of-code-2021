@@ -17,8 +17,8 @@ operator fun IntRange.times(other: IntRange) = this.flatMap { i -> other.map { j
 fun Set<Int>.minmaxgrow(): Pair<Int, Int> =
         (min(this) - 1) to (max(this) + 1)
 
-fun enhanceN(image: Image, encoding: Encoding, n: Int): Image {
-    fun enhance(prevImage: Image, step: Int): Image {
+fun Image.enhance(encoding: Encoding, n: Int): Image {
+    fun aux(prevImage: Image, step: Int): Image {
         // Get the new canvas size.
         // Since the encoding is sneaky and throws a 1 for input 0, we have to do this default symbol.
         val default = if (encoding[0] == 1 && step % 2 == 0) 1 else 0
@@ -42,14 +42,14 @@ fun enhanceN(image: Image, encoding: Encoding, n: Int): Image {
         }.toSet()
     }
 
-    return (1 .. n).fold(image) { prevImage, step -> enhance(prevImage, step)}
+    return (1 .. n).fold(this) { prevImage, step -> aux(prevImage, step)}
 }
 
-fun parseEncoding(str: String): Encoding =
-        str.toCharArray().map { if (it == '.') 0 else 1 }
+fun String.parseEncoding(): Encoding =
+        toCharArray().map { if (it == '.') 0 else 1 }
 
-fun parseImage(lst: List<String>): Image =
-        lst.withIndex().flatMap { (row, data) ->
+fun List<String>.parseImage(): Image =
+        withIndex().flatMap { (row, data) ->
             data.toCharArray().withIndex().filter { (_, char) -> char == '#' }.map { (col, _) ->
                 row to col
             }
@@ -57,14 +57,14 @@ fun parseImage(lst: List<String>): Image =
 
 fun main() {
     val input = object {}.javaClass.getResource("/day20.txt")!!.readText().trim().split("\n")
-    val encoding = parseEncoding(input[0])
-    val image = parseImage(input.drop(2))
+    val encoding = input[0].parseEncoding()
+    val image = input.drop(2).parseImage()
 
     println("--- Day 20: Trench Map ---\n")
 
     // Answer: 5622
-    println("Part 1: Number of lights after two enhancements: ${enhanceN(image, encoding, 2).size}")
+    println("Part 1: Number of lights after two enhancements: ${image.enhance(encoding, 2).size}")
 
     // Answer: 20395
-    println("Part 2: Number of lights after 50 enhancements: ${enhanceN(image, encoding, 50).size}")
+    println("Part 2: Number of lights after 50 enhancements: ${image.enhance(encoding, 50).size}")
 }

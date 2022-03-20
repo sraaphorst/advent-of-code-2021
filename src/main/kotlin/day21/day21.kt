@@ -5,6 +5,7 @@ package day21
 
 import kotlin.math.min
 import arrow.typeclasses.Monoid
+import kotlinx.coroutines.runBlocking
 
 enum class Player {
     ONE,
@@ -111,7 +112,7 @@ fun WinCount.max(): ULong = when {
     else -> second
 }
 
-fun main() {
+fun main(): Unit = runBlocking {
     val input = object {}.javaClass.getResource("/day21.txt")!!.readText().trim().split("\n")
     val p1 = PlayerState.fromString(input.first())
     val p2 = PlayerState.fromString(input.last())

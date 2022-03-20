@@ -3,6 +3,7 @@ package day20
 // day20.kt
 // By Sebastian Raaphorst, 2022.
 
+import kotlinx.coroutines.runBlocking
 import java.util.Collections.max
 import java.util.Collections.min
 
@@ -55,7 +56,7 @@ fun List<String>.parseImage(): Image =
             }
         }.toSet()
 
-fun main() {
+fun main(): Unit = runBlocking {
     val input = object {}.javaClass.getResource("/day20.txt")!!.readText().trim().split("\n")
     val encoding = input[0].parseEncoding()
     val image = input.drop(2).parseImage()

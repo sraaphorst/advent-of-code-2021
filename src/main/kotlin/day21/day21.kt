@@ -12,10 +12,11 @@ enum class Player {
 }
 
 // Integers mod 10.
-fun zn(n: Int) = object: Monoid<Int> {
+fun zn(n: Int) = object : Monoid<Int> {
     override fun empty(): Int = 0
     override fun Int.combine(b: Int): Int = (this + b) % n
 }
+
 val z10 = zn(10)
 
 data class PlayerState(val position: Int, val score: Int) {
@@ -39,16 +40,19 @@ data class BoardState(val player1: PlayerState, val player2: PlayerState, val tu
         Player.TWO -> BoardState(player1, player2.move(squares), Player.ONE, winningCondition)
     }
 }
+
 fun answer1(player1: PlayerState, player2: PlayerState): Int {
     val scoring = { b: BoardState, rolls: Int ->
         min(b.player1.score, b.player2.score) * rolls
     }
 
-    val winner = { p1: PlayerState, p2: PlayerState -> when {
-        p1.score >= 1000 -> Player.ONE
-        p2.score >= 1000 -> Player.TWO
-        else -> null
-    }}
+    val winner = { p1: PlayerState, p2: PlayerState ->
+        when {
+            p1.score >= 1000 -> Player.ONE
+            p2.score >= 1000 -> Player.TWO
+            else -> null
+        }
+    }
 
     fun aux(board: BoardState, rolls: Int, lastRoll: Int): Int = when (board.winner()) {
         null ->
@@ -60,48 +64,44 @@ fun answer1(player1: PlayerState, player2: PlayerState): Int {
         else -> scoring(board, rolls)
     }
 
-    return aux(BoardState(player1, player2, Player.ONE, winner),  0, 0)
+    return aux(BoardState(player1, player2, Player.ONE, winner), 0, 0)
 }
 
 // To measure the wins between the two players.
 typealias WinCount = Pair<ULong, ULong>
 
-// I don't like this, but it seems like the easiest way to cache.
-typealias BoardCache = MutableMap<BoardState, WinCount>
-
 fun answer2(player1: PlayerState, player2: PlayerState): WinCount {
     // Convenience functions for manipulating WinCount.
     operator fun WinCount.plus(other: WinCount): WinCount =
             WinCount(first + other.first, second + other.second)
+
     operator fun WinCount.times(factor: ULong): WinCount =
             WinCount(first * factor, second * factor)
 
-    // Not functional and I don't like this.
-    val cache: BoardCache = mutableMapOf()
-
-    val dieRange = (1 .. 3)
+    val dieRange = (1..3)
     val diceRolls = dieRange.flatMap { r1 -> dieRange.flatMap { r2 -> dieRange.map { r3 -> r1 + r2 + r3 } } }
-//            .groupingBy { it }
-//            .eachCount()
-//            .mapValues { it.v }
             .groupBy { it }
             .mapValues { it.value.size.toULong() }
 
-    val winner = { p1: PlayerState, p2: PlayerState -> when {
-        p1.score >= 21 -> Player.ONE
-        p2.score >= 21 -> Player.TWO
-        else -> null
-    }}
+    val winner = { p1: PlayerState, p2: PlayerState ->
+        when {
+            p1.score >= 21 -> Player.ONE
+            p2.score >= 21 -> Player.TWO
+            else -> null
+        }
+    }
+
+    // We need a mutable map for caching. Not caching increases run time by a factor of 50 on my machine.
+    val cache = mutableMapOf<BoardState, WinCount>()
 
     fun aux(board: BoardState): WinCount = when (board.winner()) {
         Player.ONE -> WinCount(1u, 0u)
         Player.TWO -> WinCount(0u, 1u)
         else -> cache.getOrPut(board) {
-            diceRolls.map { (roll, frequency) -> aux(board.move(roll)) * frequency}
-                    .reduce { acc, wins -> acc + wins}
+            diceRolls.map { (roll, frequency) -> aux(board.move(roll)) * frequency }
+                    .reduce { acc, wins -> acc + wins }
         }
     }
-
     return aux(BoardState(player1, player2, Player.ONE, winner))
 }
 

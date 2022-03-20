@@ -1,10 +1,10 @@
 package day21
 
-import org.junit.Test
-import kotlin.test.assertEquals
-
 // day21.kt
 // By Sebastian Raaphorst, 2022.
+
+import org.junit.Test
+import kotlin.test.assertEquals
 
 class Day21Test {
     companion object {
